@@ -3,7 +3,7 @@
 #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
 #   Free Software Foundation, Inc.
 
-timestamp='2001-01-17'
+timestamp='2001-01-22'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -760,93 +760,26 @@ EOF
 	echo ${UNAME_MACHINE}-pc-minix
 	exit 0 ;;
     *:Linux:*:*)
+	# Handle the simple ELF cases right here.
+	if [ `od -An -j1 -N3 -s2 /bin/sh` = ELF ] ; then
+	    case ${UNAME_MACHINE} in
+		i?86 | ia64* | sparc | sparc64 | sh* | x86_64)
+		  echo "${UNAME_MACHINE}-unknown-linux-gnu"
+		  exit 0
+		  ;;
+	    esac
+	fi
 
-	# The BFD linker knows what the default object file format is, so
-	# first see if it will tell us. cd to the root directory to prevent
-	# problems with other programs or directories called `ld' in the path.
-	ld_supported_emulations=`cd /; ld --help 2>&1 \
-			 | sed -ne '/supported emulations:/!d
-				    s/[ 	][ 	]*/ /g
-				    s/.*supported emulations: *//
-				    s/ .*//
-				    p'`
-        case "$ld_supported_emulations" in
-	  *ia64)
-		echo "${UNAME_MACHINE}-unknown-linux"
-		exit 0
-		;;
-	  i?86linux)
-		echo "${UNAME_MACHINE}-pc-linux-gnuaout"
-		exit 0
-		;;
-	  elf_i?86)
-		TENTATIVE="${UNAME_MACHINE}-pc-linux-gnu"
-		;;
-	  i?86coff)
-		echo "${UNAME_MACHINE}-pc-linux-gnucoff"
-		exit 0
-		;;
-	  sparclinux)
-		echo "${UNAME_MACHINE}-unknown-linux-gnuaout"
-		exit 0
-		;;
-	  elf32_sparc)
-		echo "${UNAME_MACHINE}-unknown-linux-gnu"
-		exit 0
-		;;
-	  armlinux)
-		echo "${UNAME_MACHINE}-unknown-linux-gnuaout"
-		exit 0
-		;;
-	  elf32arm*)
-		echo "${UNAME_MACHINE}-unknown-linux-gnuoldld"
-		exit 0
-		;;
-	  armelf_linux*)
-		echo "${UNAME_MACHINE}-unknown-linux-gnu"
-		exit 0
-		;;
-	  m68klinux)
-		echo "${UNAME_MACHINE}-unknown-linux-gnuaout"
-		exit 0
-		;;
-	  elf32ppc | elf32ppclinux)
-		# Determine Lib Version
-		cat >$dummy.c <<EOF
-#include <features.h>
-#if defined(__GLIBC__)
-extern char __libc_version[];
-extern char __libc_release[];
-#endif
-main(argc, argv)
-     int argc;
-     char *argv[];
-{
-#if defined(__GLIBC__)
-  printf("%s %s\n", __libc_version, __libc_release);
-#else
-  printf("unkown\n");
-#endif
-  return 0;
-}
-EOF
-		LIBC=""
-		$CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null
-		if test "$?" = 0 ; then
-			./$dummy | grep 1\.99 > /dev/null
-			if test "$?" = 0 ; then
-				LIBC="libc1"
-			fi
-		fi
-		rm -f $dummy.c $dummy
-		echo powerpc-unknown-linux-gnu${LIBC}
-		exit 0
-		;;
-	  shelf_linux)
-		echo "${UNAME_MACHINE}-unknown-linux-gnu"
-		exit 0
-		;;
+	# Specific vendors.
+	case "${UNAME_MACHINE}" in
+	  s390)
+  	    echo s390-ibm-linux
+	    exit 0
+	    ;;
 	esac
+
+	# Weird cases: x86 a.out, ARM a.out, ARM gnuoldld, ARM ELF.
+
 
 	if test "${UNAME_MACHINE}" = "alpha" ; then
 		cat <<EOF >$dummy.s
@@ -925,10 +858,6 @@ EOF
 EOF
 	  $CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null && ./$dummy "${UNAME_MACHINE}" && rm $dummy.c $dummy && exit 0
 	  rm -f $dummy.c $dummy
-	elif test "${UNAME_MACHINE}" = "s390"; then
-	  echo s390-ibm-linux && exit 0
-	elif test "${UNAME_MACHINE}" = "x86_64"; then
-	  echo x86_64-unknown-linux-gnu && exit 0
 	elif test "${UNAME_MACHINE}" = "parisc" -o "${UNAME_MACHINE}" = "hppa"; then
 	  # Look for CPU level
 	  case `grep '^cpu[^a-z]*:' /proc/cpuinfo 2>/dev/null | cut -d' ' -f2` in
@@ -949,6 +878,14 @@ EOF
 	  # GCC wants to distinguish between linux-gnuoldld and linux-gnuaout.
 	  # If ld does not provide *any* "supported emulations:"
 	  # that means it is gnuoldld.
+
+  	  ld_supported_emulations=`cd /; ld --help 2>&1 \
+			 | sed -ne '/supported emulations:/!d
+				    s/[ 	][ 	]*/ /g
+				    s/.*supported emulations: *//
+				    s/ .*//
+				    p'`
+
 	  test -z "$ld_supported_emulations" \
 	    && echo "${UNAME_MACHINE}-pc-linux-gnuoldld" && exit 0
 
@@ -989,9 +926,10 @@ EOF
 	  rm -f $dummy.c $dummy
 	  test x"${TENTATIVE}" != x && echo "${TENTATIVE}" && exit 0
 	fi ;;
-# ptx 4.0 does uname -s correctly, with DYNIX/ptx in there.  earlier versions
-# are messed up and put the nodename in both sysname and nodename.
     i?86:DYNIX/ptx:4*:*)
+         # ptx 4.0 does uname -s correctly, with DYNIX/ptx in there.
+         # Earlier versions are messed up and put the nodename in both
+         # sysname and nodename.
 	echo i386-sequent-sysv4
 	exit 0 ;;
     i?86:UNIX_SV:4.2MP:2.*)
