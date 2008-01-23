@@ -1,5 +1,11 @@
 2008-01-23  Ben Elliston  <bje@gnu.org>
 
+	These files are now versioned in Git rather than CVS.  Please
+	refer to <http://savannah.gnu.org/projects/config> for details on
+	how to check out a copy using Git.
+
+2008-01-23  Ben Elliston  <bje@gnu.org>
+
 	* config.guess: Update URL for script location.
 
 2008-01-16  Chris Metcalf  <cmetcalf@tilera.com>
